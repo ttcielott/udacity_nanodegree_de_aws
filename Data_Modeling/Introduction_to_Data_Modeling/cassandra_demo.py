@@ -53,5 +53,29 @@ try:
 except Exception as e:
     print(e)
 
+print("\nRead all rows:\n")
 for row in rows:
     print(row.year, row.album_name, row.artist_name)
+
+# validate our data model with our original query
+query = "SELECT * FROM music_library WHERE year = 1970"
+try:
+    rows = session.execute(query)
+except Exception as e:
+    print(e)
+
+print("\nFrom the year 1970:\n")
+for row in rows:
+    print(row.year, row.album_name, row.artist_name)
+
+# now drop the table
+query = "DROP TABLE music_library"
+try:
+    session.execute(query)
+except Exception as e:
+    print(e)
+
+# close the session and cluster connection
+session.shutdown()
+cluster.shutdown()
+
