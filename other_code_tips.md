@@ -9,3 +9,21 @@ git filter-branch --index-filter 'git rm -rf --cached --ignore-unmatch path_to_f
 ```
 git push --force
 ```
+
+### Storing Unix timestamp or Datetime in Data Warehouse
+When dealing with date data stored as Unix timestamps in a data warehouse, there are a few considerations to keep in mind.
+
+Storing the data as Unix timestamps in the data warehouse has the advantage of being more storage-efficient, as timestamps are represented as integers. This can be beneficial if you have a large volume of data and want to optimize storage space.
+
+However, querying and analyzing data in Unix timestamp format can be less intuitive and require additional conversion steps. If you frequently need to perform date-based operations, such as filtering or aggregating data based on specific dates or time ranges, it may be more convenient to convert the Unix timestamps to a datetime data type during the ETL process and store them as such in the data warehouse.
+
+By converting the Unix timestamps to datetime data type during the ETL process, you can take advantage of the built-in date functions and operators provided by the database system. This can simplify your queries and make them more readable and easier to understand.
+
+Ultimately, the decision depends on your specific use case and requirements. If storage efficiency is a priority and you don't need to perform many date-based operations, storing the data as Unix timestamps may be a good choice. On the other hand, if you frequently work with dates and need to perform complex date-based queries, converting the timestamps to datetime during the ETL process can make your queries more straightforward.
+
+### How to convert unix timestamp to timestamp in Redshift
+```
+SELECT 
+timestamp with time zone 'epoch' + [column_with_unix_timestamp] * interval '1 second'
+FROM [relevant_table]
+```
