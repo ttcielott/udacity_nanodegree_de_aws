@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS staging_songs(
 songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplay (
     songplay_id VARCHAR(20) distkey,
-    start_time DATETIME sortkey,
+    start_time timestamptz sortkey,
     user_id INTEGER,
     level VARCHAR(10),
     song_id VARCHAR(20) NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS artists(
 
 time_table_create = ("""
 CREATE TABLE IF NOT EXISTS time(
-    start_time DATETIME sortkey,
+    start_time timestamptz sortkey,
     hour INTEGER,
     day INTEGER,
     week INTEGER,
@@ -127,7 +127,9 @@ songplay_table_insert = ("""
     songplay_id, start_time, user_id, level, song_id, 
     artist_id, sessionId, location, userAgent
     )
-    SELECT e.page, date_add('ms', e.ts,'1970-01-01'), e.userId, e.level, s.song_id,
+    SELECT e.page, 
+            timestamp with time zone 'epoch' + e.ts * interval '1 second',
+            e.userId, e.level, s.song_id,
             s.artist_id, e.sessionId, e.location, e.userAgent
     FROM staging_events e
     INNER JOIN staging_songs s ON e.artist = s.artist_name
