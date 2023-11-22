@@ -44,7 +44,6 @@ variable_df = pd.DataFrame({"Param":
               "Value":
                   [DWH_CLUSTER_TYPE, DWH_NUM_NODES, DWH_NODE_TYPE, DWH_CLUSTER_IDENTIFIER, DWH_DB, DWH_DB_USER, DWH_DB_PASSWORD, DWH_PORT, DWH_IAM_ROLE_NAME]
              })
-variable_df
 
 
 # ## Create clients for EC2, S3, IAM, and Redshift
@@ -142,15 +141,17 @@ try:
     # give Redshift 10 seconds to finish creating the cluster
     time.sleep(10)
 
+
+    # set timeout to 900 seconds (15 minutes) to avoide infinite loop
+    timeout = time.time() + 900
+
+    # until a cluster status is availble, keep waiting another 10 seconds
     myClusterProps = redshift.describe_clusters(ClusterIdentifier=DWH_CLUSTER_IDENTIFIER)['Clusters'][0]
-    prettyRedshiftProps(myClusterProps)
-
-    # set timeout to 600 seconds (10 minutes) to avoide infinite loop
-    timeout = time.time() + 600
-
-    # while cluster isn't ready, keep waiting another 10 seconds
     while myClusterProps['ClusterStatus'] != 'available' and time.time() < timeout:
         time.sleep(10)
+
+        # renew the variable, myClusterProps
+        myClusterProps = redshift.describe_clusters(ClusterIdentifier=DWH_CLUSTER_IDENTIFIER)['Clusters'][0]
     
     if myClusterProps['ClusterStatus'] == 'available':
         print("Cluster is ready!")
