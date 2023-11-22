@@ -4,6 +4,7 @@ import configparser
 # CONFIG
 config = configparser.ConfigParser()
 config.read('dwh.cfg')
+DWH_IAM_ROLE_ARN = config.get("DWH", "DWH_IAM_ROLE_ARN")
 
 # DROP TABLES
 
@@ -22,7 +23,7 @@ CREATE TABLE IF NOT EXISTS staging_events(
     artist VARCHAR(50),
     auth VARCHAR(10),
     firstName VARCHAR(50),
-    gener VARCHAR(1),
+    gender VARCHAR(1),
     itemSession INTEGER,
     lastName VARCHAR(50),
     length REAL,
@@ -34,9 +35,9 @@ CREATE TABLE IF NOT EXISTS staging_events(
     sessionId INTEGER,
     song VARCHAR(100),
     status INTEGER,
-    ts INTEGER,
+    ts BIGINT,
     userAgent VARCHAR(100),
-    userId INTEGER NOT NULL)
+    userId INTEGER)
 ;""")
 
 staging_songs_table_create = ("""
@@ -68,11 +69,11 @@ CREATE TABLE IF NOT EXISTS songplay (
 
 user_table_create = ("""
 CREATE TABLE IF NOT EXISTS users(
-    user_id INTEGER,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50),
+    user_id INTEGER NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
     gender VARCHAR(1),
-    level VARCHAR(10) 
+    level VARCHAR(10)  sortkey NOT NULL
 ) diststyle all;""")
 
 song_table_create = ("""
@@ -80,8 +81,8 @@ CREATE TABLE IF NOT EXISTS songs(
     song_id VARCHAR(20) NOT NULL,
     title VARCHAR(20) NOT NULL,
     artist_id VARCHAR(50),
-    year INTEGER sortkey,
-    duration REAL,
+    year INTEGER NOT NULL sortkey,
+    duration REAL
 ) diststyle all;""")
 
 artist_table_create = ("""
@@ -107,18 +108,24 @@ CREATE TABLE IF NOT EXISTS time(
 # STAGING TABLES
 
 staging_events_copy = ("""
-COPY staging_event 
+COPY staging_events 
 FROM 's3://udacity-dend/log_data'
 iam_role '{}'
-json 's3://udacity-dend/log_json_path.json';
-;""").format()
+json 's3://udacity-dend/log_json_path.json'
+removequotes
+emptyasnull
+blanksasnull
+;""").format(DWH_IAM_ROLE_ARN)
 
 staging_songs_copy = ("""
 COPY staging_songs
 FROM 's3://udacity-dend/song_data'
 iam_role '{}'
 json 'auto'
-;""").format()
+removequotes
+emptyasnull
+blanksasnull
+;""").format(DWH_IAM_ROLE_ARN)
 
 # FINAL TABLES
 
@@ -176,7 +183,31 @@ time_table_insert = ("""
 
 # QUERY LISTS
 
-create_table_queries = [staging_events_table_create, staging_songs_table_create, songplay_table_create, user_table_create, song_table_create, artist_table_create, time_table_create]
-drop_table_queries = [staging_events_table_drop, staging_songs_table_drop, songplay_table_drop, user_table_drop, song_table_drop, artist_table_drop, time_table_drop]
-copy_table_queries = [staging_events_copy, staging_songs_copy]
-insert_table_queries = [songplay_table_insert, user_table_insert, song_table_insert, artist_table_insert, time_table_insert]
+create_table_queries = [('staging_events_table_create', staging_events_table_create),
+                        ('staging_songs_table_create', staging_songs_table_create),
+                        ('songplay_table_create', songplay_table_create), 
+                        ('user_table_create', user_table_create), 
+                        ('song_table_create', song_table_create), 
+                        ('artist_table_create', artist_table_create), 
+                        ('time_table_create', time_table_create)
+                        ]
+
+drop_table_queries = [('staging_events_table_drop', staging_events_table_drop),  
+                      ('staging_songs_table_drop', staging_songs_table_drop),  
+                      ('songplay_table_drop', songplay_table_drop),  
+                      ('user_table_drop', user_table_drop),  
+                      ('song_table_drop', song_table_drop), 
+                      ('artist_table_drop', artist_table_drop),  
+                      ('time_table_drop', time_table_drop)
+                      ] 
+
+copy_table_queries = [('staging_events_copy', staging_events_copy), 
+                      ('staging_songs_copy', staging_songs_copy)
+                      ]
+
+insert_table_queries = [('songplay_table_insert', songplay_table_insert), 
+                        ('user_table_insert', user_table_insert), 
+                        ('song_table_insert', song_table_insert), 
+                        ('artist_table_insert', artist_table_insert), 
+                        ('time_table_insert', time_table_insert)
+                        ]
