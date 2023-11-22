@@ -27,3 +27,24 @@ SELECT
 timestamp with time zone 'epoch' + [column_with_unix_timestamp] * interval '1 second'
 FROM [relevant_table]
 ```
+
+### Redshift Error:  Check 'stl_load_errors' system table for details.
+```
+query = """select  starttime, raw_line, err_reason
+from stl_load_errors
+order by starttime desc
+limit 5;
+"""
+%sql $query
+```
+
+### Redshift Error: Changing Data Type of The Column
+```
+ALTER TABLE [table_name] drop column [column_name];
+ALTER TABLE [table_name] add column [column_name] [data_type];
+```
+
+Somehow, the following code didn't work.
+```
+ALTER TABLE [table_name] ALTER column [column_name] TYPE [data_type];
+```
