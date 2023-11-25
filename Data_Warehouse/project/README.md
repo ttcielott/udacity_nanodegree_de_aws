@@ -43,6 +43,11 @@ In order to implement this project, you need the following AWS setup.
     KEY=
     SECRET=
 
+    [DATA]
+    SONG_DATA_LINK=s3://udacity-dend/song_data
+    LOG_DATA_LINK=s3://udacity-dend/log_data
+    LOGMETA_DATA_LINK=s3://udacity-dend/log_json_path.json
+
     [DWH] 
     DWH_CLUSTER_TYPE=multi-node
     DWH_NUM_NODES=4
@@ -165,7 +170,7 @@ python etl.py
 
 3. Users' Web browser
     ```sql
-    SELECT DISTINCT(split_part(split_part(useragent, '/', 4), ' ', 2)) AS web_browser, 
+    SELECT DISTINCT(split_part(split_part(user_agent, '/', 4), ' ', 2)) AS web_browser, 
            COUNT(*) AS num_event
     FROM songplays
     GROUP BY web_browser
