@@ -48,3 +48,14 @@ Somehow, the following code didn't work.
 ```
 ALTER TABLE [table_name] ALTER column [column_name] TYPE [data_type];
 ```
+
+
+### How to zip files excluding some files
+Suppose you want to exclude config files, you can run command on terminal as follows.
+```
+zip [zip_file_name].zip * -x "*.cfg"
+```
+Suppose you don't include subfolders in zip files
+```
+cd [folder directory to zip] && zip [zip_file_name].zip *
+```
