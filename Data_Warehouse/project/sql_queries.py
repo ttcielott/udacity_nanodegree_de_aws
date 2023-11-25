@@ -13,7 +13,7 @@ LOGMETA_DATA_LINK = config.get("DATA", "LOGMETA_DATA_LINK")
 
 staging_events_table_drop = "DROP TABLE IF EXISTS staging_events;"
 staging_songs_table_drop = "DROP TABLE IF EXISTS staging_songs;"
-songplay_table_drop = "DROP TABLE IF EXISTS songplay;"
+songplay_table_drop = "DROP TABLE IF EXISTS songplays;"
 user_table_drop = "DROP TABLE IF EXISTS users;"
 song_table_drop = "DROP TABLE IF EXISTS songs;"
 artist_table_drop = "DROP TABLE IF EXISTS artists;"
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS staging_events(
     artist          VARCHAR(255),
     auth            VARCHAR(255), 
     firstName       VARCHAR(255),
-    gender          VARCHAR(255),   
+    gender          VARCHAR(1),   
     itemInSession   INTEGER,
     lastName        VARCHAR(255),
     length          FLOAT,
@@ -59,53 +59,58 @@ CREATE TABLE IF NOT EXISTS staging_songs(
 
 songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplays(
-    songplay_id VARCHAR(255),
+    songplay_id VARCHAR(100) NOT NULL distkey,
     start_time timestamptz sortkey,
     user_id INTEGER,
-    level VARCHAR(255),
-    song_id VARCHAR(255),
-    artist_id VARCHAR(255),
-    sessionId INTEGER,
-    location VARCHAR(255),
-    userAgent VARCHAR
+    level VARCHAR(20),
+    song_id VARCHAR(50),
+    artist_id VARCHAR(50),
+    session_id INTEGER,
+    location VARCHAR(100),
+    user_agent VARCHAR(255),
+    PRIMARY KEY(songplay_id)
 );""")
 
 user_table_create = ("""
 CREATE TABLE IF NOT EXISTS users(
-    user_id INTEGER,
-    first_name VARCHAR(255),
-    last_name VARCHAR(255),
-    gender VARCHAR(255),
-    level VARCHAR
+    user_id INTEGER NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    gender VARCHAR(1),
+    level VARCHAR(10),
+    PRIMARY KEY (user_id)
 ) diststyle all;""")
 
 song_table_create = ("""
 CREATE TABLE IF NOT EXISTS songs(
-    song_id VARCHAR(255),
-    title VARCHAR(255),
-    artist_id VARCHAR(255),
+    song_id VARCHAR(50) NOT NULL distkey,
+    title VARCHAR(200),
+    artist_id VARCHAR(50),
     year INTEGER  sortkey,
-    duration REAL
-) diststyle all;""")
+    duration REAL,
+    PRIMARY KEY(song_id)
+);""")
 
 artist_table_create = ("""
 CREATE TABLE IF NOT EXISTS artists(
-    artist_id VARCHAR(255),
-    name VARCHAR(255),
-    location VARCHAR(255),
-    latitude VARCHAR(255),
-    longitude VARCHAR
-) diststyle all;""")
+    artist_id VARCHAR(50) NOT NULL distkey,
+    name VARCHAR(100) sortkey,
+    location VARCHAR(200),
+    latitude DECIMAL(11,8),
+    longitude DECIMAL(11,8),
+    PRIMARY KEY(artist_id)
+);""")
 
 time_table_create = ("""
 CREATE TABLE IF NOT EXISTS time(
-    start_time timestamptz sortkey,
+    start_time timestamptz NOT NULL sortkey,
     hour INTEGER,
     day INTEGER,
     week INTEGER,
     month INTEGER,
     year INTEGER,
-    weekday INTEGER
+    weekday INTEGER,
+    PRIMARY KEY (start_time)
 ) diststyle all;""")
 
 # STAGING TABLES
@@ -114,16 +119,16 @@ LOG_DATA_LINK = config.get("DATA", "LOG_DATA_LINK")
 LOGMETA_DATA_LINK = config.get("DATA", "LOGMETA_DATA_LINK")
 staging_events_copy = ("""
 COPY staging_events 
-FROM {}
+FROM '{}'
 iam_role '{}'
-json {}
+json '{}'
 emptyasnull
 blanksasnull
 ;""").format(LOG_DATA_LINK, DWH_IAM_ROLE_ARN, LOGMETA_DATA_LINK )
 
 staging_songs_copy = ("""
 COPY staging_songs
-FROM {}
+FROM '{}'
 iam_role '{}'
 json 'auto'
 emptyasnull
@@ -135,30 +140,32 @@ blanksasnull
 songplay_table_insert = ("""
     INSERT INTO songplays(
     songplay_id, start_time, user_id, level, song_id, 
-    artist_id, sessionId, location, userAgent
+    artist_id, session_id, location, user_agent
     )
-    SELECT e.page, 
+    SELECT DISTINCT CONCAT(e.userId, e.ts), 
             timestamp with time zone 'epoch' + e.ts/1000 * interval '1 second',
             e.userId, e.level, s.song_id,
             s.artist_id, e.sessionId, e.location, e.userAgent
-    FROM staging_events e
-    INNER JOIN staging_songs s ON e.artist = s.artist_name
-                AND e.song = s.title
+    FROM staging_events e, staging_songs s
+    WHERE page = 'NextSong'
+            AND e.artist = s.artist_name
+            AND e.song = s.title
 ;""")
 
 user_table_insert = ("""
     INSERT INTO users (
         user_id, first_name, last_name, gender, level
         )
-    SELECT userId, firstName, lastName, gender, level
+    SELECT DISTINCT userId, firstName, lastName, gender, level
     FROM staging_events
+    WHERE page = 'NextSong'
 ;""")
 
 song_table_insert = ("""
     INSERT INTO songs (
         song_id, title, artist_id, year, duration
         )
-    SELECT song_id, title, artist_id, year, duration
+    SELECT DISTINCT song_id, title, artist_id, year, duration
     FROM staging_songs 
 ;""")
 
@@ -166,7 +173,7 @@ artist_table_insert = ("""
     INSERT INTO artists(
             artist_id, name, location, latitude, longitude
             )
-    SELECT artist_id, artist_name, artist_location, artist_latitude, artist_longitude
+    SELECT DISTINCT artist_id, artist_name, artist_location, artist_latitude, artist_longitude
     FROM staging_songs
 ;""")
 
@@ -174,14 +181,14 @@ time_table_insert = ("""
     INSERT INTO time (
         start_time, hour, day, week, month, year, weekday
         )
-    SELECT start_time,
+    SELECT DISTINCT start_time,
             EXTRACT(hour FROM start_time) AS hour,
             EXTRACT(day FROM start_time) AS day,
             EXTRACT(week FROM start_time) AS week,
             EXTRACT(month FROM start_time) AS month,
             EXTRACT(year FROM start_time) AS year,
             EXTRACT(dayofweek FROM start_time) AS dayofweek
-    FROM songplay
+    FROM songplays
 ;""")
 
 # CHECK ROW COUNT
