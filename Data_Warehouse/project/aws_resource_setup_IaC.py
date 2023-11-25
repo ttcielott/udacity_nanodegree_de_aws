@@ -95,6 +95,15 @@ except Exception as e:
 # TODO: Attach Policy
 print('1.2 Attaching Policy')
 def attach_iam_policy(role_name, policy_arn):
+    """
+    The function attaches an IAM policy to a role in AWS.
+    
+    Args:
+      role_name: The name of the IAM role to which you want to attach the policy. This role will have
+    the permissions defined in the policy attached to it.
+      policy_arn: The `policy_arn` parameter is the Amazon Resource Name (ARN) of the IAM policy that
+    you want to attach to the IAM role.
+    """
     response = iam.attach_role_policy(RoleName = role_name,
                                PolicyArn = policy_arn)
 
@@ -113,6 +122,17 @@ roleArn = iam.get_role(RoleName = DWH_IAM_ROLE_NAME)['Role']['Arn']
 # - wait until the cluster status becomes `Available`
 
 def prettyRedshiftProps(props):
+    """
+    The function `prettyRedshiftProps` takes a dictionary of Redshift properties and returns a pandas
+    DataFrame with selected key-value pairs.
+    
+    Args:
+      props: A dictionary containing the properties of a Redshift cluster.
+    
+    Returns:
+      a pandas DataFrame object that contains the specified properties from the input dictionary. The
+    DataFrame has two columns: "Key" and "Value".
+    """
     pd.set_option('display.max_colwidth', -1)
     keysToShow = ["ClusterIdentifier", "NodeType", "ClusterStatus", "MasterUsername", "DBName", "Endpoint", "NumberOfNodes", 'VpcId']
     x = [(k, v) for k,v in props.items() if k in keysToShow]
