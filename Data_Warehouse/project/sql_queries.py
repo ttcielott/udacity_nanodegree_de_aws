@@ -184,6 +184,24 @@ time_table_insert = ("""
     FROM songplay
 ;""")
 
+# CHECK ROW COUNT
+def check_row_count(table_name):
+    """
+    The function returns a SQL query that counts the number of rows in a specified table.
+    
+    Args:
+      table_name: The table_name parameter is a string that represents the name of the table for which
+    you want to check the row count.
+    
+    Returns:
+      The SQL query string that counts the number of rows in the specified table.
+    """
+    row_count = """
+    SELECT COUNT(*) FROM {}
+    """.format(table_name)
+
+    return row_count
+
 # QUERY LISTS
 
 create_table_queries = [
@@ -212,9 +230,9 @@ copy_table_queries = [
                       ]
 
 insert_table_queries = [
-                        ('songplay_table_insert', songplay_table_insert), 
-                        ('user_table_insert', user_table_insert), 
-                        ('song_table_insert', song_table_insert), 
-                        ('artist_table_insert', artist_table_insert), 
-                        ('time_table_insert', time_table_insert)
+                        ('songplay_table_insert', songplay_table_insert, check_row_count('songplays')), 
+                        ('user_table_insert', user_table_insert, check_row_count('users')), 
+                        ('song_table_insert', song_table_insert, check_row_count('songs')), 
+                        ('artist_table_insert', artist_table_insert, check_row_count('artists')), 
+                        ('time_table_insert', time_table_insert, check_row_count('time'))
                         ]
