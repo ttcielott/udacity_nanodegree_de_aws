@@ -1,0 +1,15 @@
+# How to Fix the Error of 'Generate DDL' in Athena
+
+Even before creating from s3 bucket, we can see already-created customer_landing table which is created from GlueTable step.
+
+However, that table lacks following setting.
+
+<img src=GlueTable_SerDe_properties.png width=400 alt="Glue Table's SerDe properties"></img>
+
+Solution 1. You can go back to Glue Table and find 'advanced properties' and manually add these four 'SerDe' properties.
+
+Solution 2. Or you can create a new table in Athena following the steps in the course.
+
+<img src=create_from_s3.png width=400 alt="create a table from s3 bucket data"></img>
+
+I would recommend the first choice because you should add table schema all over again in the second solution.
