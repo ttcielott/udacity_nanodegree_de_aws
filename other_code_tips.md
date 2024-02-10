@@ -63,7 +63,7 @@ ALTER TABLE [table_name] ALTER column [column_name] TYPE [data_type];
 Suppose you want to exclude config files, you can run command on terminal as follows.
 
 ```bash
-zip [zip_file_name].zip * -x "*.cfg"
+zip -r [zip_file_name].zip * -x "*.cfg"
 ```
 
 Suppose you don't include subfolders in zip files
